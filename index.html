@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beam Designer</title>
+  <style>
+    :root {
+      --navy:#17324d; --blue:#3478a8; --pale:#edf4f8; --line:#ccd6de;
+      --ink:#1d2b38; --muted:#647585; --green:#16835b; --green-bg:#edf8f3;
+      --surface:#f4f7f9; --white:#fff;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,"Segoe UI",Arial,sans-serif; color:var(--ink); background:var(--surface); }
+    header { height:68px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; background:var(--navy); color:white; }
+    .brand { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
+    .brand-mark { width:34px; height:34px; border:2px solid #8bb4d1; border-radius:8px; display:grid; place-items:center; font-size:16px; }
+    .header-unit { color:#bfd1df; font-size:13px; font-weight:600; }
+    main { max-width:1440px; margin:auto; padding:24px 28px 40px; }
+    .layout { display:grid; grid-template-columns:340px minmax(0,1fr); gap:20px; align-items:start; }
+    .panel,.card { background:white; border:1px solid var(--line); border-radius:10px; box-shadow:0 2px 8px rgb(23 50 77 / 5%); }
+    .panel { padding:18px; }
+    .section-heading,.card-heading { display:flex; align-items:center; justify-content:space-between; margin:0 0 14px; }
+    .section-heading h2,.card-heading h2 { margin:0; font-size:15px; }
+    .field { margin-bottom:14px; }
+    .field label,.field-label { display:block; margin-bottom:7px; color:#415466; font-size:12px; font-weight:700; }
+    .segmented { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
+    .segmented button { min-height:38px; border:0; border-right:1px solid var(--line); background:white; color:#526575; font-size:12px; cursor:pointer; }
+    .segmented button:last-child { border-right:0; }
+    .segmented button.active { background:var(--pale); color:var(--navy); font-weight:800; }
+    .input-wrap { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; height:40px; border:1px solid var(--line); border-radius:7px; background:white; overflow:hidden; }
+    .input-wrap input,.select { width:100%; height:38px; border:0; outline:0; padding:0 10px; background:white; color:var(--ink); font:inherit; font-size:13px; }
+    .input-wrap .unit { padding:0 10px; color:var(--muted); font-size:12px; border-left:1px solid #edf1f4; }
+    select { width:100%; height:40px; border:1px solid var(--line); border-radius:7px; padding:0 10px; background:white; color:var(--ink); font:inherit; font-size:13px; }
+    .subpanel { margin:16px -18px 0; padding:16px 18px 0; border-top:1px solid #e5eaee; }
+    .subpanel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .subpanel-head h3 { margin:0; font-size:13px; }
+    .add-button { height:30px; padding:0 9px; border:0; border-radius:6px; background:var(--pale); color:var(--navy); font-size:11px; font-weight:700; cursor:pointer; }
+    .load-row { display:grid; grid-template-columns:1fr 1fr 28px; gap:8px; align-items:end; margin-bottom:10px; }
+    .load-row .field { margin:0; }
+    .remove-button { width:28px; height:38px; border:0; border-radius:6px; background:#f3f5f6; color:#9a3a3a; font-size:16px; cursor:pointer; }
+    .lumber-fields { display:none; }
+    .property-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .property { min-height:52px; padding:8px 9px; border:1px solid #e5eaee; border-radius:7px; background:#fafbfc; }
+    .property span { display:block; color:var(--muted); font-size:10px; margin-bottom:4px; }
+    .property strong { font-size:12px; }
+    .calculate-button { width:100%; height:44px; margin-top:14px; border:0; border-radius:6px; background:var(--navy); color:white; font-size:13px; font-weight:700; cursor:pointer; }
+    .workspace { display:grid; gap:16px; min-width:0; }
+    .card { padding:14px; min-width:0; }
+    .card-heading { min-height:24px; margin-bottom:8px; }
+    .card-heading h2 { font-size:13px; }
+    .status { display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px; color:var(--green); background:var(--green-bg); font-size:10px; font-weight:800; }
+    .status::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--green); }
+    .results-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .metric-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
+    .metric { border-radius:7px; background:#f7f9fa; padding:9px; }
+    .metric span { display:block; color:var(--muted); font-size:10px; margin-bottom:5px; }
+    .metric strong { font-size:16px; }
+    .beam-card { height:270px; }
+    .beam-card svg { width:100%; height:224px; display:block; }
+    .plots-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .plot-card { height:248px; }
+    .plot-card svg { width:100%; height:205px; display:block; }
+    .axis { stroke:#9aa8b3; stroke-width:1; }
+    .gridline { stroke:#e7ecef; stroke-width:1; }
+    .beam-line { stroke:var(--navy); stroke-width:8; stroke-linecap:round; }
+    .curve { fill:none; stroke:var(--blue); stroke-width:3; }
+    .area { fill:#dceaf3; opacity:.85; }
+    .load-arrow { stroke:#b85c45; stroke-width:2; fill:none; marker-end:url(#arrowRed); }
+    .support { fill:#647585; }
+    .dimension { stroke:#8a99a5; stroke-width:1; }
+    .overall-card { display:grid; grid-template-columns:1fr auto; align-items:center; min-height:74px; }
+    .overall-card h2 { margin:0 0 5px; font-size:14px; }
+    .overall-card p { margin:0; color:var(--muted); font-size:12px; }
+    .overall-status { display:flex; align-items:center; gap:8px; color:var(--green); font-size:17px; font-weight:800; }
+    .overall-status::before { content:"✓"; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:var(--green-bg); font-size:15px; }
+    @media (max-width:980px) {
+      .layout { grid-template-columns:300px minmax(0,1fr); }
+      .results-grid,.plots-grid { grid-template-columns:1fr; }
+      .plot-card { height:225px; }
+    }
+    @media (max-width:720px) {
+      header { height:60px; padding:0 16px; }
+      .header-unit { display:none; }
+      main { padding:14px 12px 28px; }
+      .layout { grid-template-columns:1fr; }
+      .workspace { order:-1; }
+      .panel { padding:14px; }
+      .subpanel { margin-left:-14px; margin-right:-14px; padding-left:14px; padding-right:14px; }
+      .beam-card { height:245px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="brand-mark">BM</div><span>Beam Designer</span></div>
+    <div class="header-unit">US Customary Units</div>
+  </header>
+  <main>
+    <div class="layout">
+      <aside class="panel">
+        <div class="section-heading"><h2>Beam and Loading</h2></div>
+
+        <div class="field">
+          <span class="field-label">Beam type</span>
+          <div class="segmented" id="beamType">
+            <button class="active" type="button" data-type="simply">Simply supported</button>
+            <button type="button" data-type="cantilever">Cantilever</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="span">Span</label>
+          <div class="input-wrap"><input id="span" type="number" value="20" min="1" max="100" step="0.1"><span class="unit">ft</span></div>
+        </div>
+
+        <div class="subpanel">
+          <div class="subpanel-head"><h3>Point loads</h3><button class="add-button" id="addPoint" type="button">+ Add point load</button></div>
+          <div id="pointLoads">
+            <div class="load-row">
+              <div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="5.0" min="-100" max="100" step="0.1"><span class="unit">kip</span></div></div>
+              <div class="field"><label>Location</label><div class="input-wrap"><input type="number" value="10.0" min="0" max="20" step="0.1"><span class="unit">ft</span></div></div>
+              <button class="remove-button" type="button" aria-label="Remove point load">×</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="subpanel">
+          <div class="subpanel-head"><h3>Uniform load</h3><button class="add-button" id="addUniform" type="button">+ Add uniform load</button></div>
+          <div id="uniformLoads">
+            <div class="load-row">
+              <div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="1.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div></div>
+              <div></div>
+              <button class="remove-button" type="button" aria-label="Remove uniform load">×</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="subpanel">
+          <div class="subpanel-head"><h3>Member</h3></div>
+          <div class="field">
+            <span class="field-label">Material</span>
+            <div class="segmented" id="materialType">
+              <button class="active" type="button" data-material="steel">Steel</button>
+              <button type="button" data-material="lumber">Lumber</button>
+            </div>
+          </div>
+          <div id="steelFields">
+            <div class="field"><label for="steelShape">Steel W-shape</label><select id="steelShape"><option selected>W12×26</option><option>W10×33</option><option>W14×30</option><option>W16×40</option></select></div>
+          </div>
+          <div class="lumber-fields" id="lumberFields">
+            <div class="field"><label for="species">Species</label><select id="species"><option selected>Douglas Fir-Larch</option><option>Southern Pine</option><option>Hem-Fir</option></select></div>
+            <div class="field"><label for="grade">Grade</label><select id="grade"><option selected>No. 2</option><option>No. 1</option><option>Selected Structural</option></select></div>
+            <div class="field"><label for="lumberSize">Size</label><select id="lumberSize"><option selected>2×8</option><option>2×10</option><option>2×12</option></select></div>
+          </div>
+          <div class="section-heading" style="margin-top:16px"><h2>Member properties</h2></div>
+          <div class="property-grid">
+            <div class="property"><span>Area A</span><strong>7.65 in²</strong></div>
+            <div class="property"><span>Section modulus S</span><strong>33.4 in³</strong></div>
+            <div class="property"><span>Moment of inertia I</span><strong>204 in⁴</strong></div>
+            <div class="property"><span>Elastic modulus E</span><strong>29,000 ksi</strong></div>
+            <div class="property" style="grid-column:1/-1"><span>Allowable bending stress Fb</span><strong>24.0 ksi</strong></div>
+          </div>
+        </div>
+
+        <button class="calculate-button" type="button">Calculate beam</button>
+      </aside>
+
+      <section class="workspace">
+        <div class="card overall-card">
+          <div><h2>Overall result</h2><p>Both bending and deflection checks passed</p></div>
+          <div class="overall-status">PASS</div>
+        </div>
+
+        <div class="results-grid">
+          <div class="card">
+            <div class="card-heading"><h2>Maximum shear</h2><span class="status">Calculated</span></div>
+            <div class="metric-row" style="grid-template-columns:1fr"><div class="metric"><span>V<sub>max</sub></span><strong>12.50 kip</strong></div></div>
+          </div>
+          <div class="card">
+            <div class="card-heading"><h2>Maximum moment</h2><span class="status">Passed</span></div>
+            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>M<sub>max</sub></span><strong>50.0 kip-ft</strong></div><div class="metric"><span>f<sub>b</sub> / F<sub>b</sub></span><strong>18.0 / 24 ksi</strong></div></div>
+          </div>
+          <div class="card">
+            <div class="card-heading"><h2>Deflection</h2><span class="status">Passed</span></div>
+            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>y<sub>max</sub></span><strong>0.609 in</strong></div><div class="metric"><span>Limit L/360</span><strong>0.667 in</strong></div></div>
+          </div>
+        </div>
+
+        <div class="card beam-card">
+          <div class="card-heading"><h2>Beam and loads</h2><span class="status">Example loaded</span></div>
+          <svg viewBox="0 0 780 224" role="img" aria-label="Beam with supports and loads">
+            <defs><marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b85c45"></path></marker></defs>
+            <g stroke="#e7ecef" stroke-width="1"><line x1="70" y1="54" x2="710" y2="54"></line><line x1="70" y1="154" x2="710" y2="154"></line></g>
+            <line class="beam-line" x1="90" y1="130" x2="690" y2="130"></line>
+            <polygon class="support" points="90,130 72,165 108,165"></polygon><polygon class="support" points="690,130 672,165 708,165"></polygon>
+            <line x1="62" y1="166" x2="118" y2="166" class="dimension"></line><line x1="662" y1="166" x2="718" y2="166" class="dimension"></line>
+            <g class="load-arrow"><line x1="390" y1="68" x2="390" y2="118"></line><line x1="330" y1="68" x2="330" y2="118"></line><line x1="450" y1="68" x2="450" y2="118"></line><line x1="270" y1="68" x2="270" y2="118"></line><line x1="510" y1="68" x2="510" y2="118"></line></g>
+            <text x="390" y="54" text-anchor="middle" fill="#b85c45" font-size="12" font-weight="700">w = 1.0 kip/ft</text>
+            <text x="390" y="190" text-anchor="middle" fill="#647585" font-size="12">20 ft span</text>
+            <line class="dimension" x1="90" y1="202" x2="690" y2="202"></line><line class="dimension" x1="90" y1="196" x2="90" y2="208"></line><line class="dimension" x1="690" y1="196" x2="690" y2="208"></line>
+          </svg>
+        </div>
+
+        <div class="plots-grid">
+          <div class="card plot-card">
+            <div class="card-heading"><h2>Shear diagram</h2></div>
+            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder shear diagram">
+              <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
+              <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 L42 65 L330 139 L330 102 Z"></path><path class="curve" d="M42 65 L330 139"></path>
+              <text x="48" y="58" fill="#3478a8" font-size="11" font-weight="700">+10.0 kip</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+            </svg>
+          </div>
+          <div class="card plot-card">
+            <div class="card-heading"><h2>Moment diagram</h2></div>
+            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder moment diagram">
+              <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
+              <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 28 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 28 330 102"></path>
+              <text x="186" y="38" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">50.0 kip-ft</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+            </svg>
+          </div>
+          <div class="card plot-card">
+            <div class="card-heading"><h2>Deflection diagram</h2></div>
+            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder deflection diagram">
+              <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
+              <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 174 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 174 330 102"></path>
+              <text x="186" y="184" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">0.609 in</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+            </svg>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    document.querySelectorAll(".segmented").forEach(function(group) {
+      group.addEventListener("click", function(event) {
+        if (event.target.tagName !== "BUTTON") return;
+        group.querySelectorAll("button").forEach(function(button) { button.classList.remove("active"); });
+        event.target.classList.add("active");
+        if (group.id === "materialType") {
+          var steel = event.target.dataset.material === "steel";
+          document.getElementById("steelFields").style.display = steel ? "block" : "none";
+          document.getElementById("lumberFields").style.display = steel ? "none" : "block";
+        }
+      });
+    });
+
+    document.getElementById("addPoint").addEventListener("click", function() {
+      var row = document.createElement("div");
+      row.className = "load-row";
+      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-100" max="100" step="0.1"><span class="unit">kip</span></div></div><div class="field"><label>Location</label><div class="input-wrap"><input type="number" value="10.0" min="0" max="20" step="0.1"><span class="unit">ft</span></div></div><button class="remove-button" type="button" aria-label="Remove point load">×</button>';
+      document.getElementById("pointLoads").appendChild(row);
+    });
+
+    document.getElementById("addUniform").addEventListener("click", function() {
+      var row = document.createElement("div");
+      row.className = "load-row";
+      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div></div><div></div><button class="remove-button" type="button" aria-label="Remove uniform load">×</button>';
+      document.getElementById("uniformLoads").appendChild(row);
+    });
+
+    document.addEventListener("click", function(event) {
+      if (event.target.classList.contains("remove-button")) event.target.closest(".load-row").remove();
+    });
+  </script>
+</body>
+</html>
