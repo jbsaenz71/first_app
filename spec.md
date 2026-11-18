@@ -84,10 +84,65 @@ whether the beam is strong and stiff enough.
 - Preserve the entered values while validation or recalculation is displayed
 
 ## Calculations
-- Reactions, shear, and moment from statics
-- Deflection along the beam
-- Bending stress fb = M/S, compared to the allowable stress
-- Deflection compared to L/360
+- Use upward force and upward reaction values as positive. Define positive
+  point-load and uniform-load values as downward, matching the signed input
+  values. The beam's left end is x = 0 ft and the right end is x = L ft.
+- Combine all uniform loads acting over the full span into one distributed
+  load:
+  - w = sum of uniform-load magnitudes, in kip/ft
+- Point-load resultant:
+  - P_i = signed point-load magnitude, in kip
+  - x_i = point-load position measured from the left end, in ft
+- Reactions:
+  - Simply supported:
+    - R_B = [sum(P_i x_i) + wL^2/2] / L
+    - R_A = sum(P_i) + wL - R_B
+  - Cantilever:
+    - R_A = -sum(P_i) - wL
+    - M_A = sum(P_i x_i) + wL^2/2
+  - R_A is the left vertical reaction, R_B is the right vertical reaction,
+    and M_A is the left-end fixed reaction moment
+- Shear at position x:
+  - H(x-x_i) is 1 when x >= x_i and 0 otherwise
+  - Simply supported:
+    - V(x) = R_A - sum[P_i H(x-x_i)] - w x
+  - Cantilever:
+    - V(x) = -sum[P_i H(x_i-x)] - w(L-x)
+  - V is in kip
+- Moment at position x:
+  - Simply supported:
+    - M(x) = R_A x - sum[P_i(x-x_i)H(x-x_i)] - w x^2/2
+  - Cantilever:
+    - M(x) = -sum[P_i(x_i-x)H(x_i-x)] - w(L-x)^2/2
+  - M is in kip-ft
+  - Include exact support and point-load positions when sampling diagrams
+- Deflection:
+  - EI y''(x) = M(x), with consistent sign units
+  - y is vertical deflection, E is modulus of elasticity, and I is moment
+    of inertia about the bending axis
+  - Express length in inches and loads in kips for numerical calculations:
+    E in ksi, I in in^4, M in kip-in, and y in inches
+  - Apply support boundary conditions for the selected beam type and integrate
+    M/EI twice along the full span
+  - Simply supported: y = 0 at both x = 0 and x = L
+  - Cantilever: y = 0 and y' = 0 at x = 0
+- Bending stress:
+  - f_b = M_max_in / S
+  - M_max_in is the largest absolute moment converted to kip-in
+  - S is section modulus in in^3
+  - f_b is in ksi
+  - Bending pass condition: f_b <= F_b, where F_b is the catalog allowable
+    bending stress in ksi
+- Deflection limit:
+  - L_in = L * 12
+  - y_limit = L_in / 360, in inches
+  - Deflection pass condition: |y_max| <= y_limit
+- Maximum output values:
+  - V_max = maximum absolute shear in kip
+  - M_max = maximum absolute moment in kip-ft
+  - y_max = maximum absolute deflection in inches
+- Overall result:
+  - Pass only if both the bending and deflection checks pass
 
 ## Outputs
 - Beam and load diagram
