@@ -38,6 +38,10 @@
     .add-button { height:30px; padding:0 9px; border:0; border-radius:6px; background:var(--pale); color:var(--navy); font-size:11px; font-weight:700; cursor:pointer; }
     .load-row { display:grid; grid-template-columns:1fr 1fr 28px; gap:8px; align-items:end; margin-bottom:10px; }
     .load-row .field { margin:0; }
+    .field-error { min-height:14px; margin-top:4px; color:#b33a3a; font-size:10px; }
+    .input-wrap.invalid,.lumber-fields select.invalid,select.invalid { border-color:#c95d5d; }
+    .validation-summary { display:none; margin:12px 0 0; padding:10px; border:1px solid #e8b0b0; border-radius:7px; background:#fff7f7; color:#8d3030; font-size:11px; }
+    .validation-summary.visible { display:block; }
     .remove-button { width:28px; height:38px; border:0; border-radius:6px; background:#f3f5f6; color:#9a3a3a; font-size:16px; cursor:pointer; }
     .lumber-fields { display:none; }
     .property-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
@@ -46,6 +50,7 @@
     .property strong { font-size:12px; }
     .calculate-button { width:100%; height:44px; margin-top:14px; border:0; border-radius:6px; background:var(--navy); color:white; font-size:13px; font-weight:700; cursor:pointer; }
     .workspace { display:grid; gap:16px; min-width:0; }
+    .workspace.hidden { display:none; }
     .card { padding:14px; min-width:0; }
     .card-heading { min-height:24px; margin-bottom:8px; }
     .card-heading h2 { font-size:13px; }
@@ -112,24 +117,19 @@
         <div class="field">
           <label for="span">Span</label>
           <div class="input-wrap"><input id="span" type="number" value="20" min="1" max="100" step="0.1"><span class="unit">ft</span></div>
+          <div class="field-error"></div>
         </div>
 
         <div class="subpanel">
           <div class="subpanel-head"><h3>Point loads</h3><button class="add-button" id="addPoint" type="button">+ Add point load</button></div>
-          <div id="pointLoads">
-            <div class="load-row">
-              <div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="5.0" min="-100" max="100" step="0.1"><span class="unit">kip</span></div></div>
-              <div class="field"><label>Location</label><div class="input-wrap"><input type="number" value="10.0" min="0" max="20" step="0.1"><span class="unit">ft</span></div></div>
-              <button class="remove-button" type="button" aria-label="Remove point load">×</button>
-            </div>
-          </div>
+          <div id="pointLoads"></div>
         </div>
 
         <div class="subpanel">
           <div class="subpanel-head"><h3>Uniform load</h3><button class="add-button" id="addUniform" type="button">+ Add uniform load</button></div>
           <div id="uniformLoads">
             <div class="load-row">
-              <div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="1.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div></div>
+              <div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="1.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div><div class="field-error"></div></div>
               <div></div>
               <button class="remove-button" type="button" aria-label="Remove uniform load">×</button>
             </div>
@@ -163,10 +163,11 @@
           </div>
         </div>
 
-        <button class="calculate-button" type="button">Calculate beam</button>
+        <div class="validation-summary" id="validationSummary" role="alert"></div>
+        <button class="calculate-button" id="calculateBeam" type="button">Calculate beam</button>
       </aside>
 
-      <section class="workspace">
+      <section class="workspace hidden" id="workspace">
         <div class="card overall-card">
           <div><h2>Overall result</h2><p>Both bending and deflection checks passed</p></div>
           <div class="overall-status">PASS</div>
@@ -233,6 +234,121 @@
   </main>
 
   <script>
+    function getActiveSegment(groupId) {
+      var active = document.querySelector("#" + groupId + " button.active");
+      return active ? active : null;
+    }
+
+    function setInputError(input, message) {
+      var wrap = input.closest(".input-wrap");
+      var field = input.closest(".field");
+      var error = field ? field.querySelector(".field-error") : null;
+      if (wrap) wrap.classList.toggle("invalid", Boolean(message));
+      if (error) error.textContent = message || "";
+    }
+
+    function clearValidationErrors() {
+      document.querySelectorAll(".invalid").forEach(function(element) {
+        element.classList.remove("invalid");
+      });
+      document.querySelectorAll(".field-error").forEach(function(element) {
+        element.textContent = "";
+      });
+      var summary = document.getElementById("validationSummary");
+      summary.textContent = "";
+      summary.classList.remove("visible");
+    }
+
+    function collectBeamInputs() {
+      var spanInput = document.getElementById("span");
+      var span = Number(spanInput.value);
+      var pointLoads = [];
+      document.querySelectorAll("#pointLoads .load-row").forEach(function(row) {
+        var inputs = row.querySelectorAll('input[type="number"]');
+        pointLoads.push({
+          magnitude: Number(inputs[0].value),
+          location: Number(inputs[1].value)
+        });
+      });
+      var uniformLoads = [];
+      document.querySelectorAll("#uniformLoads .load-row").forEach(function(row) {
+        var input = row.querySelector('input[type="number"]');
+        uniformLoads.push({ magnitude: Number(input.value) });
+      });
+      var materialButton = getActiveSegment("materialType");
+      return {
+        beamType: getActiveSegment("beamType").dataset.type,
+        span: span,
+        pointLoads: pointLoads,
+        uniformLoads: uniformLoads,
+        material: materialButton ? materialButton.dataset.material : "steel",
+        steelShape: document.getElementById("steelShape").value,
+        species: document.getElementById("species").value,
+        grade: document.getElementById("grade").value,
+        lumberSize: document.getElementById("lumberSize").value
+      };
+    }
+
+    function validateNumericInput(input, minimum, maximum, label) {
+      var value = input.value.trim();
+      var number = Number(value);
+      if (value === "" || !Number.isFinite(number)) {
+        setInputError(input, label + " is required.");
+        return false;
+      }
+      if (number < minimum || number > maximum) {
+        setInputError(input, label + " must be from " + minimum + " to " + maximum + ".");
+        return false;
+      }
+      setInputError(input, "");
+      return true;
+    }
+
+    function calculateBeamInputs(inputs) {
+      clearValidationErrors();
+      var valid = true;
+      var spanInput = document.getElementById("span");
+      if (!validateNumericInput(spanInput, 1, 100, "Span")) valid = false;
+      if (inputs.uniformLoads.length === 0) valid = false;
+
+      document.querySelectorAll("#pointLoads .load-row").forEach(function(row) {
+        var inputsInRow = row.querySelectorAll('input[type="number"]');
+        if (!validateNumericInput(inputsInRow[0], -100, 100, "Point-load magnitude")) valid = false;
+        if (!validateNumericInput(inputsInRow[1], 0, inputs.span, "Point-load location")) valid = false;
+      });
+      document.querySelectorAll("#uniformLoads .load-row").forEach(function(row) {
+        var input = row.querySelector('input[type="number"]');
+        if (!validateNumericInput(input, -10, 10, "Uniform load")) valid = false;
+      });
+
+      if (inputs.material === "lumber") {
+        ["species", "grade", "lumberSize"].forEach(function(id) {
+          var select = document.getElementById(id);
+          if (!select.value) {
+            select.classList.add("invalid");
+            valid = false;
+          } else {
+            select.classList.remove("invalid");
+          }
+        });
+      }
+
+      if (!valid) {
+        var summary = document.getElementById("validationSummary");
+        summary.textContent = "Correct the highlighted fields before analysis.";
+        summary.classList.add("visible");
+      }
+      return valid;
+    }
+
+    function drawPlaceholderResults() {
+      document.getElementById("workspace").classList.remove("hidden");
+    }
+
+    function hideAnalysisResults() {
+      document.getElementById("workspace").classList.add("hidden");
+    }
+
     document.querySelectorAll(".segmented").forEach(function(group) {
       group.addEventListener("click", function(event) {
         if (event.target.tagName !== "BUTTON") return;
@@ -243,25 +359,65 @@
           document.getElementById("steelFields").style.display = steel ? "block" : "none";
           document.getElementById("lumberFields").style.display = steel ? "none" : "block";
         }
+        hideAnalysisResults();
       });
     });
 
     document.getElementById("addPoint").addEventListener("click", function() {
       var row = document.createElement("div");
       row.className = "load-row";
-      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-100" max="100" step="0.1"><span class="unit">kip</span></div></div><div class="field"><label>Location</label><div class="input-wrap"><input type="number" value="10.0" min="0" max="20" step="0.1"><span class="unit">ft</span></div></div><button class="remove-button" type="button" aria-label="Remove point load">×</button>';
+      var span = Number(document.getElementById("span").value) || 20;
+      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-100" max="100" step="0.1"><span class="unit">kip</span></div><div class="field-error"></div></div><div class="field"><label>Location</label><div class="input-wrap"><input type="number" value="' + (span / 2).toFixed(1) + '" min="0" max="' + span + '" step="0.1"><span class="unit">ft</span></div><div class="field-error"></div></div><button class="remove-button" type="button" aria-label="Remove point load">×</button>';
       document.getElementById("pointLoads").appendChild(row);
+      hideAnalysisResults();
     });
 
     document.getElementById("addUniform").addEventListener("click", function() {
       var row = document.createElement("div");
       row.className = "load-row";
-      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div></div><div></div><button class="remove-button" type="button" aria-label="Remove uniform load">×</button>';
+      row.innerHTML = '<div class="field"><label>Magnitude</label><div class="input-wrap"><input type="number" value="0.0" min="-10" max="10" step="0.1"><span class="unit">kip/ft</span></div><div class="field-error"></div></div><div></div><button class="remove-button" type="button" aria-label="Remove uniform load">×</button>';
       document.getElementById("uniformLoads").appendChild(row);
+      hideAnalysisResults();
     });
 
     document.addEventListener("click", function(event) {
-      if (event.target.classList.contains("remove-button")) event.target.closest(".load-row").remove();
+      if (event.target.classList.contains("remove-button")) {
+        var container = event.target.closest("#pointLoads, #uniformLoads");
+        if (container && container.id === "uniformLoads" && container.querySelectorAll(".load-row").length === 1) {
+          var summary = document.getElementById("validationSummary");
+          summary.textContent = "At least one uniform load is required.";
+          summary.classList.add("visible");
+          return;
+        }
+        event.target.closest(".load-row").remove();
+        hideAnalysisResults();
+      }
+    });
+
+    document.getElementById("span").addEventListener("input", function(event) {
+      var span = Number(event.target.value);
+      document.querySelectorAll("#pointLoads input[type='number']:last-child").forEach(function(input) {});
+      document.querySelectorAll("#pointLoads .load-row").forEach(function(row) {
+        var location = row.querySelectorAll("input[type='number']")[1];
+        location.max = String(span);
+      });
+      hideAnalysisResults();
+    });
+
+    document.addEventListener("input", function(event) {
+      if (event.target.matches("input")) hideAnalysisResults();
+    });
+    document.addEventListener("change", function(event) {
+      if (event.target.matches("select")) hideAnalysisResults();
+    });
+
+    document.getElementById("calculateBeam").addEventListener("click", function() {
+      var inputs = collectBeamInputs();
+      if (calculateBeamInputs(inputs)) {
+        drawPlaceholderResults();
+      } else {
+        hideAnalysisResults();
+      }
     });
   </script>
 </body>
