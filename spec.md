@@ -8,7 +8,7 @@ whether the beam is strong and stiff enough.
 - Beam type
   - Unit: not applicable
   - Range: simply supported or cantilever
-  - Default: cantilever
+  - Default: simply supported
   - Control: segmented control
 - Span
   - Unit: feet
@@ -169,7 +169,7 @@ deflection 0.609 in.
 Continuous beams and buckling.
 
 ## Resolved notes
-- Default beam type: cantilever.
+- Default beam type: simply supported.
 - Span: 1.0 to 100.0 feet, default 20.0 feet.
 - Point-load magnitude: -100.0 to 100.0 kips, default 0.0 kips.
 - Point-load location: 0.0 feet to the beam span, default at midspan.
