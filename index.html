@@ -48,6 +48,8 @@
     .property { min-height:52px; padding:8px 9px; border:1px solid #e5eaee; border-radius:7px; background:#fafbfc; }
     .property span { display:block; color:var(--muted); font-size:10px; margin-bottom:4px; }
     .property strong { font-size:12px; }
+    .catalog-note { margin:10px 0 0; color:var(--muted); font-size:10px; line-height:1.5; }
+    .catalog-note a { color:var(--blue); }
     .calculate-button { width:100%; height:44px; margin-top:14px; border:0; border-radius:6px; background:var(--navy); color:white; font-size:13px; font-weight:700; cursor:pointer; }
     .workspace { display:grid; gap:16px; min-width:0; }
     .workspace.hidden { display:none; }
@@ -146,21 +148,26 @@
             </div>
           </div>
           <div id="steelFields">
-            <div class="field"><label for="steelShape">Steel W-shape</label><select id="steelShape"><option selected>W12×26</option><option>W10×33</option><option>W14×30</option><option>W16×40</option></select></div>
+            <div class="field"><label for="steelShape">Steel W-shape</label><select id="steelShape"></select></div>
           </div>
           <div class="lumber-fields" id="lumberFields">
-            <div class="field"><label for="species">Species</label><select id="species"><option selected>Douglas Fir-Larch</option><option>Southern Pine</option><option>Hem-Fir</option></select></div>
-            <div class="field"><label for="grade">Grade</label><select id="grade"><option selected>No. 2</option><option>No. 1</option><option>Selected Structural</option></select></div>
-            <div class="field"><label for="lumberSize">Size</label><select id="lumberSize"><option selected>2×8</option><option>2×10</option><option>2×12</option></select></div>
+            <div class="field"><label for="species">Species</label><select id="species"></select></div>
+            <div class="field"><label for="grade">Grade</label><select id="grade"></select></div>
+            <div class="field"><label for="lumberSize">Size</label><select id="lumberSize"></select></div>
           </div>
           <div class="section-heading" style="margin-top:16px"><h2>Member properties</h2></div>
-          <div class="property-grid">
-            <div class="property"><span>Area A</span><strong>7.65 in²</strong></div>
-            <div class="property"><span>Section modulus S</span><strong>33.4 in³</strong></div>
-            <div class="property"><span>Moment of inertia I</span><strong>204 in⁴</strong></div>
-            <div class="property"><span>Elastic modulus E</span><strong>29,000 ksi</strong></div>
-            <div class="property" style="grid-column:1/-1"><span>Allowable bending stress Fb</span><strong>24.0 ksi</strong></div>
+          <div class="property-grid" id="memberProperties" aria-live="polite">
+            <div class="property"><span>Area A</span><strong data-property="area">—</strong></div>
+            <div class="property"><span>Section modulus Sx</span><strong data-property="sx">—</strong></div>
+            <div class="property"><span>Moment of inertia Ix</span><strong data-property="ix">—</strong></div>
+            <div class="property"><span>Elastic modulus E</span><strong data-property="e">—</strong></div>
+            <div class="property" style="grid-column:1/-1"><span>Reference bending stress Fb</span><strong data-property="fb">—</strong></div>
           </div>
+          <p class="catalog-note">
+            Demo catalog subset. Steel geometry: <a href="https://www.aisc.org/publications/steel-construction-manual-resources/" target="_blank" rel="noreferrer">AISC Shapes Database v15.0</a>.
+            Lumber reference values: <a href="https://awc.org/resources/2024-nds-supplement/" target="_blank" rel="noreferrer">AWC 2024 NDS Supplement</a>.
+            Fb values are unadjusted reference assumptions, not a design approval.
+          </p>
         </div>
 
         <div class="validation-summary" id="validationSummary" role="alert"></div>
@@ -234,9 +241,98 @@
   </main>
 
   <script>
+    const memberCatalog = {
+      steel: [
+        { id:"W12X26", label:"W12×26", area:"7.65 in²", sx:"33.4 in³", ix:"204 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
+        { id:"W10X33", label:"W10×33", area:"9.71 in²", sx:"35.0 in³", ix:"171 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
+        { id:"W14X30", label:"W14×30", area:"8.85 in²", sx:"42.0 in³", ix:"291 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
+        { id:"W16X40", label:"W16×40", area:"11.8 in²", sx:"64.7 in³", ix:"518 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" }
+      ],
+      lumber: {
+        "Douglas Fir-Larch": {
+          "No. 2": [
+            { id:"2x8", label:"2×8 (actual 1.5×7.25 in)", area:"10.875 in²", sx:"13.141 in³", ix:"47.635 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" },
+            { id:"2x10", label:"2×10 (actual 1.5×9.25 in)", area:"13.875 in²", sx:"21.391 in³", ix:"98.932 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" },
+            { id:"2x12", label:"2×12 (actual 1.5×11.25 in)", area:"16.875 in²", sx:"31.641 in³", ix:"177.979 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" }
+          ]
+        }
+      }
+    };
+
     function getActiveSegment(groupId) {
       var active = document.querySelector("#" + groupId + " button.active");
       return active ? active : null;
+    }
+
+    function populateSelect(select, items, selectedId) {
+      select.replaceChildren();
+      items.forEach(function(item) {
+        var option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.label;
+        select.appendChild(option);
+      });
+      if (items.some(function(item) { return item.id === selectedId; })) {
+        select.value = selectedId;
+      }
+    }
+
+    function getSelectedMemberProperties() {
+      var material = getActiveSegment("materialType").dataset.material;
+      if (material === "steel") {
+        return memberCatalog.steel.find(function(item) {
+          return item.id === document.getElementById("steelShape").value;
+        }) || null;
+      }
+
+      var species = document.getElementById("species").value;
+      var grade = document.getElementById("grade").value;
+      var size = document.getElementById("lumberSize").value;
+      var sizes = memberCatalog.lumber[species] && memberCatalog.lumber[species][grade];
+      return sizes ? sizes.find(function(item) { return item.id === size; }) || null : null;
+    }
+
+    function renderMemberProperties() {
+      var properties = getSelectedMemberProperties();
+      var fields = document.querySelectorAll("#memberProperties [data-property]");
+      var values = properties ? {
+        area:properties.area,
+        sx:properties.sx,
+        ix:properties.ix,
+        e:properties.e,
+        fb:properties.fb
+      } : {};
+      fields.forEach(function(field) {
+        field.textContent = values[field.dataset.property] || "Not available";
+      });
+    }
+
+    function updateLumberCatalogSelection() {
+      var speciesSelect = document.getElementById("species");
+      var gradeSelect = document.getElementById("grade");
+      var sizeSelect = document.getElementById("lumberSize");
+      var previousSpecies = speciesSelect.value;
+      var previousGrade = gradeSelect.value;
+      var previousSize = sizeSelect.value;
+      var speciesOptions = Object.keys(memberCatalog.lumber).map(function(name) {
+        return { id:name, label:name };
+      });
+      populateSelect(speciesSelect, speciesOptions, previousSpecies || "Douglas Fir-Larch");
+
+      var grades = memberCatalog.lumber[speciesSelect.value] || {};
+      var gradeOptions = Object.keys(grades).map(function(name) { return { id:name, label:name }; });
+      populateSelect(gradeSelect, gradeOptions, previousGrade);
+
+      var sizes = grades[gradeSelect.value] || [];
+      populateSelect(sizeSelect, sizes.map(function(item) {
+        return { id:item.id, label:item.label };
+      }), previousSize);
+    }
+
+    function updateMemberCatalog() {
+      populateSelect(document.getElementById("steelShape"), memberCatalog.steel, "W12X26");
+      updateLumberCatalogSelection();
+      renderMemberProperties();
     }
 
     function setInputError(input, message) {
@@ -304,7 +400,7 @@
       return true;
     }
 
-    function calculateBeamInputs(inputs) {
+    function validateBeamInputs(inputs) {
       clearValidationErrors();
       var valid = true;
       var spanInput = document.getElementById("span");
@@ -358,6 +454,7 @@
           var steel = event.target.dataset.material === "steel";
           document.getElementById("steelFields").style.display = steel ? "block" : "none";
           document.getElementById("lumberFields").style.display = steel ? "none" : "block";
+          renderMemberProperties();
         }
         hideAnalysisResults();
       });
@@ -408,17 +505,26 @@
       if (event.target.matches("input")) hideAnalysisResults();
     });
     document.addEventListener("change", function(event) {
-      if (event.target.matches("select")) hideAnalysisResults();
+      if (!event.target.matches("select")) return;
+      if (event.target.id === "species" || event.target.id === "grade") {
+        updateLumberCatalogSelection();
+      }
+      if (["steelShape", "species", "grade", "lumberSize"].indexOf(event.target.id) !== -1) {
+        renderMemberProperties();
+      }
+      hideAnalysisResults();
     });
 
     document.getElementById("calculateBeam").addEventListener("click", function() {
       var inputs = collectBeamInputs();
-      if (calculateBeamInputs(inputs)) {
+      if (validateBeamInputs(inputs)) {
         drawPlaceholderResults();
       } else {
         hideAnalysisResults();
       }
     });
+
+    updateMemberCatalog();
   </script>
 </body>
 </html>
