@@ -58,6 +58,8 @@
     .card-heading h2 { font-size:13px; }
     .status { display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px; color:var(--green); background:var(--green-bg); font-size:10px; font-weight:800; }
     .status::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--green); }
+    .status.fail { color:#a83232; background:#fff0f0; }
+    .status.fail::before { background:#a83232; }
     .results-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
     .metric-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
     .metric { border-radius:7px; background:#f7f9fa; padding:9px; }
@@ -81,6 +83,8 @@
     .overall-card p { margin:0; color:var(--muted); font-size:12px; }
     .overall-status { display:flex; align-items:center; gap:8px; color:var(--green); font-size:17px; font-weight:800; }
     .overall-status::before { content:"✓"; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:var(--green-bg); font-size:15px; }
+    .overall-status.fail { color:#a83232; }
+    .overall-status.fail::before { content:"!"; background:#fff0f0; }
     @media (max-width:980px) {
       .layout { grid-template-columns:300px minmax(0,1fr); }
       .results-grid,.plots-grid { grid-template-columns:1fr; }
@@ -176,28 +180,28 @@
 
       <section class="workspace hidden" id="workspace">
         <div class="card overall-card">
-          <div><h2>Overall result</h2><p>Both bending and deflection checks passed</p></div>
-          <div class="overall-status">PASS</div>
+          <div><h2>Overall result</h2><p id="overallMessage">Both bending and deflection checks passed</p></div>
+          <div class="overall-status" id="overallStatus">PASS</div>
         </div>
 
         <div class="results-grid">
           <div class="card">
             <div class="card-heading"><h2>Maximum shear</h2><span class="status">Calculated</span></div>
-            <div class="metric-row" style="grid-template-columns:1fr"><div class="metric"><span>V<sub>max</sub></span><strong>12.50 kip</strong></div></div>
+            <div class="metric-row" style="grid-template-columns:1fr"><div class="metric"><span>V<sub>max</sub></span><strong id="maximumShear">—</strong></div></div>
           </div>
           <div class="card">
-            <div class="card-heading"><h2>Maximum moment</h2><span class="status">Passed</span></div>
-            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>M<sub>max</sub></span><strong>50.0 kip-ft</strong></div><div class="metric"><span>f<sub>b</sub> / F<sub>b</sub></span><strong>18.0 / 24 ksi</strong></div></div>
+            <div class="card-heading"><h2>Maximum moment / bending</h2><span class="status" id="bendingStatus">—</span></div>
+            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>M<sub>max</sub></span><strong id="maximumMoment">—</strong></div><div class="metric"><span>f<sub>b</sub> / F<sub>b</sub></span><strong id="bendingStress">—</strong></div></div>
           </div>
           <div class="card">
-            <div class="card-heading"><h2>Deflection</h2><span class="status">Passed</span></div>
-            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>y<sub>max</sub></span><strong>0.609 in</strong></div><div class="metric"><span>Limit L/360</span><strong>0.667 in</strong></div></div>
+            <div class="card-heading"><h2>Deflection</h2><span class="status" id="deflectionStatus">—</span></div>
+            <div class="metric-row" style="grid-template-columns:1fr 1fr"><div class="metric"><span>y<sub>max</sub></span><strong id="maximumDeflection">—</strong></div><div class="metric"><span>Limit L/360</span><strong id="deflectionLimit">—</strong></div></div>
           </div>
         </div>
 
         <div class="card beam-card">
-          <div class="card-heading"><h2>Beam and loads</h2><span class="status">Example loaded</span></div>
-          <svg viewBox="0 0 780 224" role="img" aria-label="Beam with supports and loads">
+          <div class="card-heading"><h2>Beam and loads</h2><span class="status" id="analysisBadge">Example loaded</span></div>
+          <svg id="beamDiagram" viewBox="0 0 780 224" role="img" aria-label="Beam with supports and loads">
             <defs><marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b85c45"></path></marker></defs>
             <g stroke="#e7ecef" stroke-width="1"><line x1="70" y1="54" x2="710" y2="54"></line><line x1="70" y1="154" x2="710" y2="154"></line></g>
             <line class="beam-line" x1="90" y1="130" x2="690" y2="130"></line>
@@ -213,7 +217,7 @@
         <div class="plots-grid">
           <div class="card plot-card">
             <div class="card-heading"><h2>Shear diagram</h2></div>
-            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder shear diagram">
+            <svg id="shearDiagram" viewBox="0 0 360 205" role="img" aria-label="Shear diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 L42 65 L330 139 L330 102 Z"></path><path class="curve" d="M42 65 L330 139"></path>
               <text x="48" y="58" fill="#3478a8" font-size="11" font-weight="700">+10.0 kip</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
@@ -221,7 +225,7 @@
           </div>
           <div class="card plot-card">
             <div class="card-heading"><h2>Moment diagram</h2></div>
-            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder moment diagram">
+            <svg id="momentDiagram" viewBox="0 0 360 205" role="img" aria-label="Moment diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 28 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 28 330 102"></path>
               <text x="186" y="38" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">50.0 kip-ft</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
@@ -229,7 +233,7 @@
           </div>
           <div class="card plot-card">
             <div class="card-heading"><h2>Deflection diagram</h2></div>
-            <svg viewBox="0 0 360 205" role="img" aria-label="Placeholder deflection diagram">
+            <svg id="deflectionDiagram" viewBox="0 0 360 205" role="img" aria-label="Deflection diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 174 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 174 330 102"></path>
               <text x="186" y="184" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">0.609 in</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
@@ -243,17 +247,17 @@
   <script>
     const memberCatalog = {
       steel: [
-        { id:"W12X26", label:"W12×26", area:"7.65 in²", sx:"33.4 in³", ix:"204 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
-        { id:"W10X33", label:"W10×33", area:"9.71 in²", sx:"35.0 in³", ix:"171 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
-        { id:"W14X30", label:"W14×30", area:"8.85 in²", sx:"42.0 in³", ix:"291 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" },
-        { id:"W16X40", label:"W16×40", area:"11.8 in²", sx:"64.7 in³", ix:"518 in⁴", e:"29,000 ksi", fb:"23.8 ksi*" }
+        { id:"W12X26", label:"W12×26", area:7.65, sx:33.4, ix:204, e:29000, fb:23.8 },
+        { id:"W10X33", label:"W10×33", area:9.71, sx:35.0, ix:171, e:29000, fb:23.8 },
+        { id:"W14X30", label:"W14×30", area:8.85, sx:42.0, ix:291, e:29000, fb:23.8 },
+        { id:"W16X40", label:"W16×40", area:11.8, sx:64.7, ix:518, e:29000, fb:23.8 }
       ],
       lumber: {
         "Douglas Fir-Larch": {
           "No. 2": [
-            { id:"2x8", label:"2×8 (actual 1.5×7.25 in)", area:"10.875 in²", sx:"13.141 in³", ix:"47.635 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" },
-            { id:"2x10", label:"2×10 (actual 1.5×9.25 in)", area:"13.875 in²", sx:"21.391 in³", ix:"98.932 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" },
-            { id:"2x12", label:"2×12 (actual 1.5×11.25 in)", area:"16.875 in²", sx:"31.641 in³", ix:"177.979 in⁴", e:"1,600 ksi", fb:"0.90 ksi*" }
+            { id:"2x8", label:"2×8 (actual 1.5×7.25 in)", area:10.875, sx:13.141, ix:47.635, e:1600, fb:0.90 },
+            { id:"2x10", label:"2×10 (actual 1.5×9.25 in)", area:13.875, sx:21.391, ix:98.932, e:1600, fb:0.90 },
+            { id:"2x12", label:"2×12 (actual 1.5×11.25 in)", area:16.875, sx:31.641, ix:177.979, e:1600, fb:0.90 }
           ]
         }
       }
@@ -296,11 +300,11 @@
       var properties = getSelectedMemberProperties();
       var fields = document.querySelectorAll("#memberProperties [data-property]");
       var values = properties ? {
-        area:properties.area,
-        sx:properties.sx,
-        ix:properties.ix,
-        e:properties.e,
-        fb:properties.fb
+        area:properties.area.toLocaleString("en-US") + " in²",
+        sx:properties.sx.toLocaleString("en-US") + " in³",
+        ix:properties.ix.toLocaleString("en-US") + " in⁴",
+        e:properties.e.toLocaleString("en-US") + " ksi",
+        fb:properties.fb.toFixed(1) + " ksi*"
       } : {};
       fields.forEach(function(field) {
         field.textContent = values[field.dataset.property] || "Not available";
@@ -381,7 +385,8 @@
         steelShape: document.getElementById("steelShape").value,
         species: document.getElementById("species").value,
         grade: document.getElementById("grade").value,
-        lumberSize: document.getElementById("lumberSize").value
+        lumberSize: document.getElementById("lumberSize").value,
+        memberProperties: getSelectedMemberProperties()
       };
     }
 
@@ -437,7 +442,357 @@
       return valid;
     }
 
-    function drawPlaceholderResults() {
+    function calculateReactions(inputs, uniformLoad) {
+      var totalPointLoad = inputs.pointLoads.reduce(function(total, load) {
+        return total + load.magnitude;
+      }, 0);
+      if (inputs.beamType === "simply") {
+        var rightReaction = (
+          inputs.pointLoads.reduce(function(total, load) {
+            return total + load.magnitude * load.location;
+          }, 0) + uniformLoad * inputs.span * inputs.span / 2
+        ) / inputs.span;
+        return {
+          left:totalPointLoad + uniformLoad * inputs.span - rightReaction,
+          right:rightReaction,
+          fixedMoment:0
+        };
+      }
+
+      return {
+        left:totalPointLoad + uniformLoad * inputs.span,
+        right:0,
+        fixedMoment:inputs.pointLoads.reduce(function(total, load) {
+          return total + load.magnitude * load.location;
+        }, 0) + uniformLoad * inputs.span * inputs.span / 2
+      };
+    }
+
+    function calculateShearAt(inputs, reactions, uniformLoad, x, side) {
+      var pointContribution = inputs.pointLoads.reduce(function(total, load) {
+        var included;
+        if (inputs.beamType === "simply") {
+          included = load.location < x || (load.location === x && side === "right");
+          return total + (included ? load.magnitude : 0);
+        }
+        included = load.location > x || (load.location === x && side === "left");
+        return total + (included ? load.magnitude : 0);
+      }, 0);
+
+      if (inputs.beamType === "simply") {
+        return reactions.left - pointContribution - uniformLoad * x;
+      }
+      return pointContribution + uniformLoad * (inputs.span - x);
+    }
+
+    function calculateMomentAt(inputs, reactions, uniformLoad, x) {
+      if (inputs.beamType === "simply") {
+        return reactions.left * x - inputs.pointLoads.reduce(function(total, load) {
+          return total + load.magnitude * Math.max(x - load.location, 0);
+        }, 0) - uniformLoad * x * x / 2;
+      }
+      return -inputs.pointLoads.reduce(function(total, load) {
+        return total + load.magnitude * Math.max(load.location - x, 0);
+      }, 0) - uniformLoad * Math.pow(inputs.span - x, 2) / 2;
+    }
+
+    function uniqueSortedNumbers(values) {
+      return values.sort(function(a, b) { return a - b; }).filter(function(value, index, list) {
+        return index === 0 || Math.abs(value - list[index - 1]) > 1e-9;
+      });
+    }
+
+    function calculateDeflectionSamples(inputs, reactions, properties, uniformLoad) {
+      var spanIn = inputs.span * 12;
+      var intervals = 800;
+      var xValues = [];
+      for (var index = 0; index <= intervals; index += 1) {
+        xValues.push(spanIn * index / intervals);
+      }
+      inputs.pointLoads.forEach(function(load) {
+        xValues.push(load.location * 12);
+      });
+      xValues = uniqueSortedNumbers(xValues);
+
+      var curvature = xValues.map(function(xIn) {
+        var momentKipFt = calculateMomentAt(inputs, reactions, uniformLoad, xIn / 12);
+        return momentKipFt * 12 / (properties.e * properties.ix);
+      });
+      var slope = [0];
+      var deflection = [0];
+      for (var i = 1; i < xValues.length; i += 1) {
+        var dx = xValues[i] - xValues[i - 1];
+        slope[i] = slope[i - 1] + (curvature[i - 1] + curvature[i]) * dx / 2;
+        deflection[i] = deflection[i - 1] + (slope[i - 1] + slope[i]) * dx / 2;
+      }
+
+      var initialSlope = inputs.beamType === "simply"
+        ? -deflection[deflection.length - 1] / spanIn
+        : 0;
+      return xValues.map(function(xIn, i) {
+        return {
+          xIn:xIn,
+          xFt:xIn / 12,
+          yIn:deflection[i] + initialSlope * xIn,
+          slope:slope[i] + initialSlope
+        };
+      });
+    }
+
+    function interpolateDeflection(samples, xFt) {
+      var xIn = xFt * 12;
+      for (var i = 1; i < samples.length; i += 1) {
+        if (samples[i].xIn >= xIn) {
+          var left = samples[i - 1];
+          var right = samples[i];
+          var fraction = (xIn - left.xIn) / (right.xIn - left.xIn || 1);
+          return left.yIn + (right.yIn - left.yIn) * fraction;
+        }
+      }
+      return samples[samples.length - 1].yIn;
+    }
+
+    function findMaximumDeflection(samples) {
+      var maximum = samples.reduce(function(value, sample) {
+        return Math.max(value, Math.abs(sample.yIn));
+      }, 0);
+      for (var i = 1; i < samples.length; i += 1) {
+        var left = samples[i - 1];
+        var right = samples[i];
+        if (left.slope * right.slope < 0) {
+          var fraction = Math.abs(left.slope) / (Math.abs(left.slope) + Math.abs(right.slope));
+          var deflection = left.yIn + (right.yIn - left.yIn) * fraction;
+          maximum = Math.max(maximum, Math.abs(deflection));
+        }
+      }
+      return maximum;
+    }
+
+    function createPlotPositions(inputs) {
+      var positions = [];
+      var stepCount = 240;
+      for (var index = 0; index <= stepCount; index += 1) {
+        positions.push(inputs.span * index / stepCount);
+      }
+      var epsilon = Math.max(inputs.span * 1e-6, 1e-6);
+      inputs.pointLoads.forEach(function(load) {
+        positions.push(load.location);
+        if (load.location > 0) positions.push(Math.max(0, load.location - epsilon));
+        if (load.location < inputs.span) positions.push(Math.min(inputs.span, load.location + epsilon));
+      });
+      return uniqueSortedNumbers(positions);
+    }
+
+    function findMomentMaximum(inputs, reactions, uniformLoad) {
+      var boundaries = uniqueSortedNumbers([0, inputs.span].concat(inputs.pointLoads.map(function(load) {
+        return load.location;
+      })));
+      var candidates = boundaries.slice();
+      if (Math.abs(uniformLoad) > 1e-12) {
+        for (var i = 1; i < boundaries.length; i += 1) {
+          var left = boundaries[i - 1];
+          var right = boundaries[i];
+          if (right <= left) continue;
+          var midpoint = (left + right) / 2;
+          var shear = calculateShearAt(inputs, reactions, uniformLoad, midpoint, "right");
+          var zero = midpoint + shear / uniformLoad;
+          if (zero > left && zero < right) candidates.push(zero);
+        }
+      }
+      return candidates.reduce(function(maximum, x) {
+        return Math.max(maximum, Math.abs(calculateMomentAt(inputs, reactions, uniformLoad, x)));
+      }, 0);
+    }
+
+    function calculateBeamAnalysis(inputs) {
+      var properties = inputs.memberProperties;
+      var uniformLoad = inputs.uniformLoads.reduce(function(total, load) {
+        return total + load.magnitude;
+      }, 0);
+      var reactions = calculateReactions(inputs, uniformLoad);
+      var positions = createPlotPositions(inputs);
+      var deflectionSamples = calculateDeflectionSamples(inputs, reactions, properties, uniformLoad);
+      var edgeEpsilon = Math.max(inputs.span * 1e-8, 1e-8);
+      var plotSamples = positions.map(function(x) {
+        var shearPosition = x <= 0 ? edgeEpsilon : (x >= inputs.span ? inputs.span - edgeEpsilon : x);
+        return {
+          xFt:x,
+          shear:calculateShearAt(inputs, reactions, uniformLoad, shearPosition, "left"),
+          moment:calculateMomentAt(inputs, reactions, uniformLoad, x),
+          deflection:interpolateDeflection(deflectionSamples, x)
+        };
+      });
+      var maximumShear = plotSamples.reduce(function(maximum, sample) {
+        return Math.max(maximum, Math.abs(sample.shear));
+      }, 0);
+      var maximumMoment = findMomentMaximum(inputs, reactions, uniformLoad);
+      var maximumDeflection = findMaximumDeflection(deflectionSamples);
+      var bendingStress = maximumMoment * 12 / properties.sx;
+      var deflectionLimit = inputs.span * 12 / 360;
+
+      return {
+        inputs:inputs,
+        properties:properties,
+        uniformLoad:uniformLoad,
+        reactions:reactions,
+        plotSamples:plotSamples,
+        deflectionSamples:deflectionSamples,
+        maximumShear:maximumShear,
+        maximumMoment:maximumMoment,
+        maximumDeflection:maximumDeflection,
+        bendingStress:bendingStress,
+        deflectionLimit:deflectionLimit,
+        bendingPass:bendingStress <= properties.fb,
+        deflectionPass:maximumDeflection <= deflectionLimit
+      };
+    }
+
+    function formatValue(value, digits) {
+      return Number(value).toFixed(digits);
+    }
+
+    function setCheckStatus(elementId, passed) {
+      var element = document.getElementById(elementId);
+      element.textContent = passed ? "PASS" : "FAIL";
+      element.classList.toggle("fail", !passed);
+    }
+
+    function renderResultCards(analysis) {
+      var bendingPass = analysis.bendingPass;
+      var deflectionPass = analysis.deflectionPass;
+      var overallPass = bendingPass && deflectionPass;
+      document.getElementById("maximumShear").textContent = formatValue(analysis.maximumShear, 2) + " kip";
+      document.getElementById("maximumMoment").textContent = formatValue(analysis.maximumMoment, 2) + " kip-ft";
+      document.getElementById("bendingStress").textContent =
+        formatValue(analysis.bendingStress, 2) + " / " + formatValue(analysis.properties.fb, 2) + " ksi";
+      document.getElementById("maximumDeflection").textContent = formatValue(analysis.maximumDeflection, 3) + " in";
+      document.getElementById("deflectionLimit").textContent = formatValue(analysis.deflectionLimit, 3) + " in";
+      setCheckStatus("bendingStatus", bendingPass);
+      setCheckStatus("deflectionStatus", deflectionPass);
+
+      var overall = document.getElementById("overallStatus");
+      overall.textContent = overallPass ? "PASS" : "FAIL";
+      overall.classList.toggle("fail", !overallPass);
+      document.getElementById("overallMessage").textContent = overallPass
+        ? "Bending and deflection checks passed."
+        : "One or more checks did not pass.";
+    }
+
+    function renderBeamDiagram(analysis) {
+      var svg = document.getElementById("beamDiagram");
+      var left = 90;
+      var right = 690;
+      var beamY = 126;
+      var span = analysis.inputs.span;
+      var mapX = function(x) { return left + (right - left) * x / span; };
+      var parts = [
+        '<defs><marker id="loadArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b85c45"/></marker><marker id="reactionArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#16835b"/></marker></defs>',
+        '<line class="beam-line" x1="' + left + '" y1="' + beamY + '" x2="' + right + '" y2="' + beamY + '"/>'
+      ];
+
+      if (analysis.inputs.beamType === "simply") {
+        parts.push('<polygon class="support" points="' + left + ',' + beamY + ' ' + (left - 18) + ',165 ' + (left + 18) + ',165"/>');
+        parts.push('<polygon class="support" points="' + right + ',' + beamY + ' ' + (right - 18) + ',165 ' + (right + 18) + ',165"/>');
+        parts.push('<line class="dimension" x1="' + (left - 28) + '" y1="166" x2="' + (left + 28) + '" y2="166"/>');
+        parts.push('<line class="dimension" x1="' + (right - 28) + '" y1="166" x2="' + (right + 28) + '" y2="166"/>');
+      } else {
+        parts.push('<rect x="67" y="95" width="18" height="62" fill="#647585"/>');
+        for (var hatch = 0; hatch < 5; hatch += 1) {
+          parts.push('<line x1="' + (67 + hatch * 4) + '" y1="157" x2="' + (57 + hatch * 4) + '" y2="167" stroke="#647585"/>');
+        }
+      }
+
+      var arrowY1 = analysis.uniformLoad >= 0 ? 68 : 183;
+      var arrowY2 = analysis.uniformLoad >= 0 ? beamY - 8 : beamY + 8;
+      if (Math.abs(analysis.uniformLoad) > 1e-12) {
+        for (var arrow = 0; arrow <= 8; arrow += 1) {
+          var arrowX = left + (right - left) * arrow / 8;
+          parts.push('<line class="load-arrow" x1="' + arrowX + '" y1="' + arrowY1 + '" x2="' + arrowX + '" y2="' + arrowY2 + '" marker-end="url(#loadArrow)"/>');
+        }
+        parts.push('<text x="390" y="' + (analysis.uniformLoad >= 0 ? 54 : 202) + '" text-anchor="middle" fill="#b85c45" font-size="12" font-weight="700">w = ' + formatValue(analysis.uniformLoad, 2) + ' kip/ft</text>');
+      } else {
+        parts.push('<text x="390" y="54" text-anchor="middle" fill="#647585" font-size="12">No net uniform load</text>');
+      }
+
+      analysis.inputs.pointLoads.forEach(function(load) {
+        var x = mapX(load.location);
+        var startY = load.magnitude >= 0 ? 72 : 184;
+        var endY = load.magnitude >= 0 ? beamY - 8 : beamY + 8;
+        parts.push('<line class="load-arrow" x1="' + x + '" y1="' + startY + '" x2="' + x + '" y2="' + endY + '" marker-end="url(#loadArrow)"/>');
+        parts.push('<text x="' + x + '" y="' + (load.magnitude >= 0 ? 64 : 199) + '" text-anchor="middle" fill="#b85c45" font-size="10">' + formatValue(load.magnitude, 2) + ' kip</text>');
+      });
+
+      var leftReactionStart = analysis.reactions.left >= 0 ? beamY + 28 : beamY - 8;
+      var leftReactionEnd = analysis.reactions.left >= 0 ? beamY + 8 : beamY + 28;
+      parts.push('<line x1="' + left + '" y1="' + leftReactionStart + '" x2="' + left + '" y2="' + leftReactionEnd + '" stroke="#16835b" stroke-width="2" marker-end="url(#reactionArrow)"/>');
+      parts.push('<text x="' + left + '" y="181" text-anchor="middle" fill="#16835b" font-size="10">Rₐ ' + formatValue(analysis.reactions.left, 2) + ' kip</text>');
+      if (analysis.inputs.beamType === "simply") {
+        var rightReactionStart = analysis.reactions.right >= 0 ? beamY + 28 : beamY - 8;
+        var rightReactionEnd = analysis.reactions.right >= 0 ? beamY + 8 : beamY + 28;
+        parts.push('<line x1="' + right + '" y1="' + rightReactionStart + '" x2="' + right + '" y2="' + rightReactionEnd + '" stroke="#16835b" stroke-width="2" marker-end="url(#reactionArrow)"/>');
+        parts.push('<text x="' + right + '" y="181" text-anchor="middle" fill="#16835b" font-size="10">Rᵦ ' + formatValue(analysis.reactions.right, 2) + ' kip</text>');
+      } else {
+        parts.push('<text x="90" y="48" text-anchor="middle" fill="#647585" font-size="10">Mₐ ' + formatValue(analysis.reactions.fixedMoment, 2) + ' kip-ft</text>');
+      }
+      parts.push('<line class="dimension" x1="' + left + '" y1="210" x2="' + right + '" y2="210"/>');
+      parts.push('<text x="390" y="205" text-anchor="middle" fill="#647585" font-size="12">' + formatValue(span, 2) + ' ft span</text>');
+      svg.innerHTML = parts.join("");
+      svg.setAttribute("aria-label", "Beam and loads for " + (analysis.inputs.beamType === "simply" ? "simply supported" : "cantilever") + " beam");
+    }
+
+    function renderPlot(svgId, samples, valueKey, unit, span, signed) {
+      var svg = document.getElementById(svgId);
+      var left = 42;
+      var right = 330;
+      var top = 30;
+      var bottom = 158;
+      var values = samples.map(function(sample) { return sample[valueKey]; });
+      var min = Math.min.apply(null, values);
+      var max = Math.max.apply(null, values);
+      if (signed) {
+        var extent = Math.max(Math.abs(min), Math.abs(max), 1e-6);
+        min = -extent;
+        max = extent;
+      } else if (max - min < 1e-9) {
+        min -= 1;
+        max += 1;
+      } else {
+        var padding = (max - min) * 0.12;
+        min -= padding;
+        max += padding;
+      }
+      var mapX = function(x) { return left + (right - left) * x / span; };
+      var mapY = function(y) { return bottom - (y - min) * (bottom - top) / (max - min); };
+      var zeroY = mapY(Math.min(max, Math.max(min, 0)));
+      var curvePath = samples.map(function(sample, index) {
+        return (index === 0 ? "M" : "L") + mapX(sample.xFt).toFixed(2) + " " + mapY(sample[valueKey]).toFixed(2);
+      }).join(" ");
+      var areaPath = curvePath + " L" + right + " " + zeroY.toFixed(2) + " L" + left + " " + zeroY.toFixed(2) + " Z";
+      var yLabels = [max, (max + min) / 2, min];
+      var parts = [];
+      yLabels.forEach(function(value, index) {
+        var y = top + (bottom - top) * index / 2;
+        parts.push('<line class="gridline" x1="' + left + '" y1="' + y + '" x2="' + right + '" y2="' + y + '"/>');
+        parts.push('<text x="38" y="' + (y + 3) + '" text-anchor="end" fill="#647585" font-size="9">' + formatValue(value, 1) + '</text>');
+      });
+      parts.push('<line class="axis" x1="' + left + '" y1="' + zeroY + '" x2="' + right + '" y2="' + zeroY + '"/>');
+      parts.push('<path class="area" d="' + areaPath + '"/>');
+      parts.push('<path class="curve" d="' + curvePath + '"/>');
+      parts.push('<text x="' + left + '" y="19" fill="#647585" font-size="10" font-weight="700">' + unit + '</text>');
+      [0, span / 2, span].forEach(function(x, index) {
+        var anchor = index === 0 ? "start" : (index === 2 ? "end" : "middle");
+        parts.push('<text x="' + mapX(x) + '" y="183" text-anchor="' + anchor + '" fill="#647585" font-size="10">' + formatValue(x, 1) + ' ft</text>');
+      });
+      svg.innerHTML = parts.join("");
+    }
+
+    function renderAnalysisResults(analysis) {
+      renderResultCards(analysis);
+      renderBeamDiagram(analysis);
+      renderPlot("shearDiagram", analysis.plotSamples, "shear", "V (kip)", analysis.inputs.span, true);
+      renderPlot("momentDiagram", analysis.plotSamples, "moment", "M (kip-ft)", analysis.inputs.span, false);
+      renderPlot("deflectionDiagram", analysis.plotSamples, "deflection", "y (in)", analysis.inputs.span, true);
+      document.getElementById("analysisBadge").textContent = "Analysis complete";
       document.getElementById("workspace").classList.remove("hidden");
     }
 
@@ -484,6 +839,7 @@
           var summary = document.getElementById("validationSummary");
           summary.textContent = "At least one uniform load is required.";
           summary.classList.add("visible");
+          hideAnalysisResults();
           return;
         }
         event.target.closest(".load-row").remove();
@@ -493,7 +849,6 @@
 
     document.getElementById("span").addEventListener("input", function(event) {
       var span = Number(event.target.value);
-      document.querySelectorAll("#pointLoads input[type='number']:last-child").forEach(function(input) {});
       document.querySelectorAll("#pointLoads .load-row").forEach(function(row) {
         var location = row.querySelectorAll("input[type='number']")[1];
         location.max = String(span);
@@ -518,7 +873,7 @@
     document.getElementById("calculateBeam").addEventListener("click", function() {
       var inputs = collectBeamInputs();
       if (validateBeamInputs(inputs)) {
-        drawPlaceholderResults();
+        renderAnalysisResults(calculateBeamAnalysis(inputs));
       } else {
         hideAnalysisResults();
       }

@@ -87,6 +87,8 @@ whether the beam is strong and stiff enough.
 - Use upward force and upward reaction values as positive. Define positive
   point-load and uniform-load values as downward, matching the signed input
   values. The beam's left end is x = 0 ft and the right end is x = L ft.
+- Define H(t) = 1 when t >= 0 and H(t) = 0 otherwise. Positive internal
+  shear satisfies V(x) = dM(x)/dx between point loads.
 - Combine all uniform loads acting over the full span into one distributed
   load:
   - w = sum of uniform-load magnitudes, in kip/ft
@@ -98,16 +100,16 @@ whether the beam is strong and stiff enough.
     - R_B = [sum(P_i x_i) + wL^2/2] / L
     - R_A = sum(P_i) + wL - R_B
   - Cantilever:
-    - R_A = -sum(P_i) - wL
+    - R_A = sum(P_i) + wL
     - M_A = sum(P_i x_i) + wL^2/2
   - R_A is the left vertical reaction, R_B is the right vertical reaction,
-    and M_A is the left-end fixed reaction moment
+    and M_A is the counterclockwise external fixed reaction moment. The
+    internal beam moment at the cantilever root is M(0) = -M_A.
 - Shear at position x:
-  - H(x-x_i) is 1 when x >= x_i and 0 otherwise
   - Simply supported:
     - V(x) = R_A - sum[P_i H(x-x_i)] - w x
   - Cantilever:
-    - V(x) = -sum[P_i H(x_i-x)] - w(L-x)
+    - V(x) = sum[P_i H(x_i-x)] + w(L-x)
   - V is in kip
 - Moment at position x:
   - Simply supported:
@@ -118,8 +120,8 @@ whether the beam is strong and stiff enough.
   - Include exact support and point-load positions when sampling diagrams
 - Deflection:
   - EI y''(x) = M(x), with consistent sign units
-  - y is vertical deflection, E is modulus of elasticity, and I is moment
-    of inertia about the bending axis
+  - y is vertical deflection, positive upward; E is modulus of elasticity,
+    and I is moment of inertia about the bending axis
   - Express length in inches and loads in kips for numerical calculations:
     E in ksi, I in in^4, M in kip-in, and y in inches
   - Apply support boundary conditions for the selected beam type and integrate
