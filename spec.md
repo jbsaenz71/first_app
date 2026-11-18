@@ -167,3 +167,18 @@ deflection 0.609 in.
 
 ## Out of scope
 Continuous beams and buckling.
+
+## Resolved notes
+- Default beam type: cantilever.
+- Span: 1.0 to 100.0 feet, default 20.0 feet.
+- Point-load magnitude: -100.0 to 100.0 kips, default 0.0 kips.
+- Point-load location: 0.0 feet to the beam span, default at midspan.
+- Uniform load: -10.0 to 10.0 kips/ft, default 1.0 kip/ft.
+- Uniform loads apply over the full beam span.
+- Upward point and uniform loads use negative magnitudes.
+- Steel uses the full standard US W-shape catalog.
+- Lumber defaults to Douglas Fir-Larch, No. 2.
+- Lumber species and grade are selectable.
+- Member properties come from the selected built-in catalog entry.
+- The example is a 20 ft simply supported beam with W12x26 and 1 kip/ft
+  of uniform load.
