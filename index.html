@@ -6,19 +6,21 @@
   <title>Beam Designer</title>
   <style>
     :root {
-      --navy:#17324d; --blue:#3478a8; --pale:#edf4f8; --line:#ccd6de;
+      --brand:#A64E32; --brand-dark:#843B28; --brand-light:#F1B99F;
+      --brand-pale:#FBF1EC; --brand-plot:#A64E32; --line:#ccd6de;
       --ink:#1d2b38; --muted:#647585; --green:#16835b; --green-bg:#edf8f3;
       --surface:#f4f7f9; --white:#fff;
     }
     * { box-sizing:border-box; }
     body { margin:0; font-family:Inter,"Segoe UI",Arial,sans-serif; color:var(--ink); background:var(--surface); }
-    header { height:68px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; background:var(--navy); color:white; }
+    header { height:68px; padding:0 32px; display:flex; align-items:center; justify-content:space-between; background:var(--brand); color:white; }
     .brand { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
-    .brand-mark { width:34px; height:34px; border:2px solid #8bb4d1; border-radius:8px; display:grid; place-items:center; font-size:16px; }
-    .header-unit { color:#bfd1df; font-size:13px; font-weight:600; }
+    .brand-mark { width:34px; height:34px; border:1px solid var(--brand-light); border-radius:8px; display:grid; place-items:center; }
+    .brand-mark svg { width:23px; height:23px; fill:#F8D9CC; }
+    .header-unit { color:#F9DED2; font-size:13px; font-weight:600; }
     main { max-width:1440px; margin:auto; padding:24px 28px 40px; }
     .layout { display:grid; grid-template-columns:340px minmax(0,1fr); gap:20px; align-items:start; }
-    .panel,.card { background:white; border:1px solid var(--line); border-radius:10px; box-shadow:0 2px 8px rgb(23 50 77 / 5%); }
+    .panel,.card { background:white; border:1px solid var(--line); border-radius:10px; box-shadow:0 2px 8px rgb(29 43 56 / 5%); }
     .panel { padding:18px; }
     .section-heading,.card-heading { display:flex; align-items:center; justify-content:space-between; margin:0 0 14px; }
     .section-heading h2,.card-heading h2 { margin:0; font-size:15px; }
@@ -27,7 +29,7 @@
     .segmented { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
     .segmented button { min-height:38px; border:0; border-right:1px solid var(--line); background:white; color:#526575; font-size:12px; cursor:pointer; }
     .segmented button:last-child { border-right:0; }
-    .segmented button.active { background:var(--pale); color:var(--navy); font-weight:800; }
+    .segmented button.active { background:var(--brand-pale); color:var(--brand-dark); font-weight:800; }
     .input-wrap { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; height:40px; border:1px solid var(--line); border-radius:7px; background:white; overflow:hidden; }
     .input-wrap input,.select { width:100%; height:38px; border:0; outline:0; padding:0 10px; background:white; color:var(--ink); font:inherit; font-size:13px; }
     .input-wrap .unit { padding:0 10px; color:var(--muted); font-size:12px; border-left:1px solid #edf1f4; }
@@ -35,7 +37,7 @@
     .subpanel { margin:16px -18px 0; padding:16px 18px 0; border-top:1px solid #e5eaee; }
     .subpanel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
     .subpanel-head h3 { margin:0; font-size:13px; }
-    .add-button { height:30px; padding:0 9px; border:0; border-radius:6px; background:var(--pale); color:var(--navy); font-size:11px; font-weight:700; cursor:pointer; }
+    .add-button { height:30px; padding:0 9px; border:0; border-radius:6px; background:var(--brand-pale); color:var(--brand-dark); font-size:11px; font-weight:700; cursor:pointer; }
     .load-row { display:grid; grid-template-columns:1fr 1fr 28px; gap:8px; align-items:end; margin-bottom:10px; }
     .load-row .field { margin:0; }
     .field-error { min-height:14px; margin-top:4px; color:#b33a3a; font-size:10px; }
@@ -49,8 +51,8 @@
     .property span { display:block; color:var(--muted); font-size:10px; margin-bottom:4px; }
     .property strong { font-size:12px; }
     .catalog-note { margin:10px 0 0; color:var(--muted); font-size:10px; line-height:1.5; }
-    .catalog-note a { color:var(--blue); }
-    .calculate-button { width:100%; height:44px; margin-top:14px; border:0; border-radius:6px; background:var(--navy); color:white; font-size:13px; font-weight:700; cursor:pointer; }
+    .catalog-note a { color:var(--brand-dark); }
+    .calculate-button { width:100%; height:44px; margin-top:14px; border:0; border-radius:6px; background:var(--brand); color:white; font-size:13px; font-weight:700; cursor:pointer; }
     .workspace { display:grid; gap:16px; min-width:0; }
     .workspace.hidden { display:none; }
     .card { padding:14px; min-width:0; }
@@ -72,10 +74,10 @@
     .plot-card svg { width:100%; height:205px; display:block; }
     .axis { stroke:#9aa8b3; stroke-width:1; }
     .gridline { stroke:#e7ecef; stroke-width:1; }
-    .beam-line { stroke:var(--navy); stroke-width:8; stroke-linecap:round; }
-    .curve { fill:none; stroke:var(--blue); stroke-width:3; }
-    .area { fill:#dceaf3; opacity:.85; }
-    .load-arrow { stroke:#b85c45; stroke-width:2; fill:none; marker-end:url(#arrowRed); }
+    .beam-line { stroke:var(--brand-dark); stroke-width:8; stroke-linecap:round; }
+    .curve { fill:none; stroke:var(--brand-plot); stroke-width:3; }
+    .area { fill:#F3DDD3; opacity:.85; }
+    .load-arrow { stroke:var(--brand); stroke-width:2; fill:none; marker-end:url(#arrowRed); }
     .support { fill:#647585; }
     .dimension { stroke:#8a99a5; stroke-width:1; }
     .overall-card { display:grid; grid-template-columns:1fr auto; align-items:center; min-height:74px; }
@@ -104,7 +106,14 @@
 </head>
 <body>
   <header>
-    <div class="brand"><div class="brand-mark">BM</div><span>Beam Designer</span></div>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M2 3h20v4h-8v10h8v4H2v-4h8V7H2z"></path>
+        </svg>
+      </div>
+      <span>Beam Designer</span>
+    </div>
     <div class="header-unit">US Customary Units</div>
   </header>
   <main>
@@ -202,13 +211,13 @@
         <div class="card beam-card">
           <div class="card-heading"><h2>Beam and loads</h2><span class="status" id="analysisBadge">Example loaded</span></div>
           <svg id="beamDiagram" viewBox="0 0 780 224" role="img" aria-label="Beam with supports and loads">
-            <defs><marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b85c45"></path></marker></defs>
+            <defs><marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#A64E32"></path></marker></defs>
             <g stroke="#e7ecef" stroke-width="1"><line x1="70" y1="54" x2="710" y2="54"></line><line x1="70" y1="154" x2="710" y2="154"></line></g>
             <line class="beam-line" x1="90" y1="130" x2="690" y2="130"></line>
             <polygon class="support" points="90,130 72,165 108,165"></polygon><polygon class="support" points="690,130 672,165 708,165"></polygon>
             <line x1="62" y1="166" x2="118" y2="166" class="dimension"></line><line x1="662" y1="166" x2="718" y2="166" class="dimension"></line>
             <g class="load-arrow"><line x1="390" y1="68" x2="390" y2="118"></line><line x1="330" y1="68" x2="330" y2="118"></line><line x1="450" y1="68" x2="450" y2="118"></line><line x1="270" y1="68" x2="270" y2="118"></line><line x1="510" y1="68" x2="510" y2="118"></line></g>
-            <text x="390" y="54" text-anchor="middle" fill="#b85c45" font-size="12" font-weight="700">w = 1.0 kip/ft</text>
+            <text x="390" y="54" text-anchor="middle" fill="#A64E32" font-size="12" font-weight="700">w = 1.0 kip/ft</text>
             <text x="390" y="190" text-anchor="middle" fill="#647585" font-size="12">20 ft span</text>
             <line class="dimension" x1="90" y1="202" x2="690" y2="202"></line><line class="dimension" x1="90" y1="196" x2="90" y2="208"></line><line class="dimension" x1="690" y1="196" x2="690" y2="208"></line>
           </svg>
@@ -220,7 +229,7 @@
             <svg id="shearDiagram" viewBox="0 0 360 205" role="img" aria-label="Shear diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 L42 65 L330 139 L330 102 Z"></path><path class="curve" d="M42 65 L330 139"></path>
-              <text x="48" y="58" fill="#3478a8" font-size="11" font-weight="700">+10.0 kip</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+              <text x="48" y="58" fill="#A64E32" font-size="11" font-weight="700">+10.0 kip</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
             </svg>
           </div>
           <div class="card plot-card">
@@ -228,7 +237,7 @@
             <svg id="momentDiagram" viewBox="0 0 360 205" role="img" aria-label="Moment diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 28 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 28 330 102"></path>
-              <text x="186" y="38" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">50.0 kip-ft</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+              <text x="186" y="38" text-anchor="middle" fill="#A64E32" font-size="11" font-weight="700">50.0 kip-ft</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
             </svg>
           </div>
           <div class="card plot-card">
@@ -236,7 +245,7 @@
             <svg id="deflectionDiagram" viewBox="0 0 360 205" role="img" aria-label="Deflection diagram">
               <line class="gridline" x1="42" y1="45" x2="330" y2="45"></line><line class="gridline" x1="42" y1="102" x2="330" y2="102"></line><line class="gridline" x1="42" y1="159" x2="330" y2="159"></line>
               <line class="axis" x1="42" y1="102" x2="330" y2="102"></line><path class="area" d="M42 102 Q186 174 330 102 L330 102 Z"></path><path class="curve" d="M42 102 Q186 174 330 102"></path>
-              <text x="186" y="184" text-anchor="middle" fill="#3478a8" font-size="11" font-weight="700">0.609 in</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
+              <text x="186" y="184" text-anchor="middle" fill="#A64E32" font-size="11" font-weight="700">0.609 in</text><text x="42" y="192" fill="#647585" font-size="10">0 ft</text><text x="186" y="192" text-anchor="middle" fill="#647585" font-size="10">10 ft</text><text x="330" y="192" text-anchor="end" fill="#647585" font-size="10">20 ft</text>
             </svg>
           </div>
         </div>
@@ -686,7 +695,7 @@
       var span = analysis.inputs.span;
       var mapX = function(x) { return left + (right - left) * x / span; };
       var parts = [
-        '<defs><marker id="loadArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#b85c45"/></marker><marker id="reactionArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#16835b"/></marker></defs>',
+        '<defs><marker id="loadArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#A64E32"/></marker><marker id="reactionArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#16835b"/></marker></defs>',
         '<line class="beam-line" x1="' + left + '" y1="' + beamY + '" x2="' + right + '" y2="' + beamY + '"/>'
       ];
 
@@ -709,7 +718,7 @@
           var arrowX = left + (right - left) * arrow / 8;
           parts.push('<line class="load-arrow" x1="' + arrowX + '" y1="' + arrowY1 + '" x2="' + arrowX + '" y2="' + arrowY2 + '" marker-end="url(#loadArrow)"/>');
         }
-        parts.push('<text x="390" y="' + (analysis.uniformLoad >= 0 ? 54 : 202) + '" text-anchor="middle" fill="#b85c45" font-size="12" font-weight="700">w = ' + formatValue(analysis.uniformLoad, 2) + ' kip/ft</text>');
+        parts.push('<text x="390" y="' + (analysis.uniformLoad >= 0 ? 54 : 202) + '" text-anchor="middle" fill="#A64E32" font-size="12" font-weight="700">w = ' + formatValue(analysis.uniformLoad, 2) + ' kip/ft</text>');
       } else {
         parts.push('<text x="390" y="54" text-anchor="middle" fill="#647585" font-size="12">No net uniform load</text>');
       }
@@ -719,7 +728,7 @@
         var startY = load.magnitude >= 0 ? 72 : 184;
         var endY = load.magnitude >= 0 ? beamY - 8 : beamY + 8;
         parts.push('<line class="load-arrow" x1="' + x + '" y1="' + startY + '" x2="' + x + '" y2="' + endY + '" marker-end="url(#loadArrow)"/>');
-        parts.push('<text x="' + x + '" y="' + (load.magnitude >= 0 ? 64 : 199) + '" text-anchor="middle" fill="#b85c45" font-size="10">' + formatValue(load.magnitude, 2) + ' kip</text>');
+        parts.push('<text x="' + x + '" y="' + (load.magnitude >= 0 ? 64 : 199) + '" text-anchor="middle" fill="#A64E32" font-size="10">' + formatValue(load.magnitude, 2) + ' kip</text>');
       });
 
       var leftReactionStart = analysis.reactions.left >= 0 ? beamY + 28 : beamY - 8;
